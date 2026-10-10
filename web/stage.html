@@ -1,0 +1,289 @@
+<!doctype html><meta charset=utf-8>
+<style>
+html,body{margin:0;background:#0d1117;overflow:hidden}
+#s{position:absolute;left:0;top:0}
+#sub{position:absolute;left:0;top:0;width:1080px;height:120px;background:#080b10;border-bottom:2px solid #21262d;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:bold 40px "DejaVu Sans",sans-serif;white-space:nowrap}
+#sub span{padding:4px 7px;margin:0 2px;border-radius:9px}
+.d{color:#e6edf3}.c{background:#f0b429;color:#0d1117}.f{color:#5b6470}
+</style>
+<svg id=s width=1080 height=1080 viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id=sub></div>
+<script>
+const C={bg:'#0d1117',card:'#161b22',line:'#30363d',tx:'#e6edf3',dim:'#8b949e',g:'#56d364',r:'#f85149',a:'#f0b429',b:'#58a6ff',p:'#bc8cff'};
+const cl=x=>Math.max(0,Math.min(1,x)),ez=u=>{u=cl(u);return u*u*(3-2*u)},K=(t,a,d)=>ez((t-a)/d),lp=(a,b,u)=>a+(b-a)*u;
+const win=(t,a,b,f=0.3)=>Math.min(K(t,a,f),1-K(t,b-f,f));
+const fl=(t,a,d=1.4)=>t>=a?Math.max(0,1-(t-a)/d):0;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function A(o){let s='';for(const k in o)if(o[k]!==undefined)s+=` ${k}="${o[k]}"`;return s}
+const R=(x,y,w,h,o={})=>`<rect x="${x}" y="${y}" width="${w}" height="${h}"${A({rx:o.rx??12,fill:o.fill??C.card,stroke:o.stroke??C.line,'stroke-width':o.sw??2,opacity:o.op,'stroke-dasharray':o.dash,transform:o.tf})}/>`;
+const T=(x,y,s,o={})=>`<text x="${x}" y="${y}"${A({'font-size':o.size??22,fill:o.fill??C.tx,'text-anchor':o.anchor??'middle','font-weight':o.bold?'bold':undefined,'font-family':o.mono?'DejaVu Sans Mono':'DejaVu Sans',opacity:o.op,'letter-spacing':o.ls,transform:o.tf,'text-decoration':o.strike?'line-through':undefined})}>${esc(s)}</text>`;
+const L=(x1,y1,x2,y2,o={})=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${A({stroke:o.stroke??C.line,'stroke-width':o.sw??3,opacity:o.op,'stroke-dasharray':o.dash,'stroke-linecap':'round'})}/>`;
+const G=(inner,o={})=>`<g${A({opacity:o.op,transform:o.tf})}>${inner}</g>`;
+const mix=(c1,c2,u)=>{const h=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));const a=h(c1),b=h(c2);return '#'+a.map((v,i)=>Math.round(lp(v,b[i],cl(u))).toString(16).padStart(2,'0')).join('')};
+const sh=h=>'0x'+h.slice(0,6)+'…'+h.slice(-6);
+function pill(x,y,label,col,op=1,w=0){w=w||label.length*11+26;return G(R(x-w/2,y-17,w,34,{rx:17,fill:col,stroke:col})+T(x,y+7,label,{size:18,fill:'#0d1117',bold:1}),{op})}
+function path(pts,u){u=cl(u);const n=pts.length-1,i=Math.min(n-1,Math.floor(u*n)),f=ez(u*n-i);return [lp(pts[i][0],pts[i+1][0],f),lp(pts[i][1],pts[i+1][1],f)]}
+function mark(x,y,ok,s=1,op=1){const col=ok?C.g:C.r;const d=ok?'M-13,1 L-4,10 L14,-10':'M-11,-11 L11,11 M11,-11 L-11,11';return `<g transform="translate(${x},${y}) scale(${s})" opacity="${op}"><circle r="26" fill="${col}" opacity="0.16"/><circle r="26" fill="none" stroke="${col}" stroke-width="3"/><path d="${d}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>`}
+function keyicon(x,y,col,s=1){return `<g transform="translate(${x},${y}) scale(${s})" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round"><circle cx="-26" cy="0" r="17"/><path d="M-9,0 L42,0 M28,0 L28,15 M42,0 L42,11"/></g>`}
+let TL;
+const W=(k,w,n=0)=>{const a=TL.words[k].filter(x=>x[1]===w);return a.length?a[Math.min(n,a.length-1)][0]:TL.starts[k]};
+
+function subs(t){
+  const el=document.getElementById('sub');let c=null;
+  for(const s of TL.subs){if(t>=s.t0&&t<s.t1){c=s;break}}
+  if(!c){el.innerHTML='';return}
+  let cur=-1;c.words.forEach((w,i)=>{if(t>=w[0]-0.03)cur=i});
+  const lineEnd=TL.starts[c.line]+TL.durs[c.line];
+  el.innerHTML=c.words.map((w,i)=>`<span class="${i<cur?'d':i==cur?(t<=Math.max(w[1],w[0]+0.28)+0.1?'c':'d'):'f'}">${esc(w[2])}</span>`).join('');
+}
+
+function tree(x0,y0,o){
+  let s='';const cx=x0+155,ry=y0,ly=y0+92;
+  const xs=[x0+52,x0+155,x0+258];
+  o.leaves.forEach((lf,i)=>{if(lf.op<=0)return;s+=L(xs[i],ly,cx,ry+40,{stroke:lf.dead?C.r:C.line,op:lf.op*(lf.dead?0.35:1),dash:lf.dead?'6 7':undefined})});
+  s+=R(cx-112,ry,224,40,{rx:10,fill:mix(C.card,C.a,o.flash*0.3),stroke:mix(C.a,'#ffffff',o.flash*0.7),sw:2+o.flash*3});
+  s+=T(cx,ry+27,'root '+o.root,{size:18,mono:1,fill:mix(C.a,'#ffffff',o.flash),bold:1});
+  o.leaves.forEach((lf,i)=>{if(lf.op<=0)return;const col=lf.dead?C.r:lf.warn?C.a:lf.hot?C.g:C.line;const sc=lp(0.6,1,ez(lf.op));
+    s+=G(R(-48,0,96,38,{rx:10,fill:mix(C.card,C.g,(lf.pop||0)*0.7),stroke:col,sw:lf.hot||lf.warn||lf.dead?3:2,dash:lf.dead?'5 5':undefined})+T(0,26,lf.name,{size:18,fill:lf.dead?C.r:C.tx,strike:lf.dead})+(lf.tag?T(0,58,lf.tag,{size:14,fill:lf.dead?C.r:C.a,bold:1,ls:1}):''),{tf:`translate(${xs[i]},${ly}) scale(${sc})`,op:lf.op*(lf.dead?0.8:1)})});
+  return {svg:s,xs,ly,cx,ry};
+}
+
+function band(u){
+  const c=TL.cmd,b=TL.beats;let s='';
+  s+=R(0,720,1080,360,{rx:0,fill:'#0a0e14',stroke:'none'})+L(0,721,1080,721,{stroke:'#21262d',sw:2});
+  const hd=(x,t)=>T(x,752,t,{size:14,fill:C.dim,anchor:'start',ls:1.5});
+  s+=hd(22,"ALICE'S WALLET · OFF CHAIN")+hd(372,'ACCOUNT 0x…cafe8403 · ON CHAIN')+hd(702,'NODE')+hd(902,'BALANCES');
+  let root=TL.roots[0],rt=-9;for(const r of TL.roots)if(u>=r.t){root=r;rt=r.t}
+  const rf=rt>1?fl(u,rt):0;
+  const lost=u>=c.a5.done&&u<c.a7.done,ghost=u>=c.a5.done?(u<c.a7.done?K(u,c.a5.done,0.4):1-K(u,c.a7.done,0.4)):0;
+  const sending=(k,name)=>u>=c[k].start&&u<c[k].done+0.6;
+  const leaves=[
+    {name:'laptop',op:1,dead:u>=c.a4.done,warn:u>=b.l4+1.5&&u<c.a4.done,tag:u>=c.a4.done?'REVOKED':u>=b.l4+1.5?'STOLEN':'',hot:sending('a2')},
+    {name:'vault',op:1},
+    {name:'phone',op:K(u,c.a2.done,0.45),pop:fl(u,c.a2.done,1.6),hot:sending('a3')||sending('a4')||sending('a8')}];
+  const tr=tree(20,775,{root:root.root.slice(0,6)+'…',flash:rf,leaves});
+  s+=G(tr.svg,{op:1-ghost*0.82});
+  if(lost)s+=G(R(20,948,330,40,{rx:20,fill:'#2a1215',stroke:C.r})+T(185,975,'local copy of the tree deleted',{size:17,fill:C.r,bold:1}),{op:K(u,c.a5.done,0.4)});
+  const rec=fl(u,c.a7.done,1.6);if(rec>0)s+=R(8,764,326,182,{rx:14,fill:'none',stroke:C.g,sw:4,op:rec});
+  // account
+  s+=R(370,768,300,150,{stroke:mix(C.line,C.a,rf)});
+  s+=T(390,798,'committed root · storage slot 0',{size:15,fill:C.dim,anchor:'start'});
+  s+=R(386,808,268,46,{rx:9,fill:mix('#0d1117',C.a,rf*0.3),stroke:mix(C.a,'#ffffff',rf*0.7),sw:2+rf*3});
+  s+=T(520,839,sh(root.root),{size:22,mono:1,bold:1,fill:mix(C.a,'#ffffff',rf)});
+  s+=T(390,880,root.keys.length+' key records in storage',{size:15,fill:C.dim,anchor:'start'});
+  s+=T(390,904,root.keys.join(' · '),{size:16,fill:C.g,anchor:'start'});
+  // node
+  s+=R(700,768,170,150,{});
+  s+=T(785,798,'Nethermind',{size:18,bold:1});
+  s+=T(785,818,'runs the account check',{size:12.5,fill:C.dim});
+  const res=[['a2',1,'new root stored'],['a3',1,'key is in the tree'],['a4',1,'new root stored'],['t1',0,'proof ≠ current root'],['t2',0,'key not in this tree'],['t3',0,'signature ≠ this tx'],['a8',1,'key is in the tree']];
+  let last=null;for(const q of res)if(u>=c[q[0]].done)last=q;
+  if(last){const t0=c[last[0]].done,o=Math.min(1,(u-t0)/0.15)*(1-K(u,t0+4.4,0.6)),sc=1+fl(u,t0,0.35)*0.5,shk=last[1]?0:Math.sin((u-t0)*46)*8*fl(u,t0,0.5);
+    s+=mark(785+shk,856,last[1],sc*0.82,o)+T(785,905,last[2],{size:12.5,fill:last[1]?C.g:C.r,bold:1,op:o})+(o<=0.01?T(785,862,'waiting…',{size:15,fill:C.dim}):'')}
+  else s+=T(785,862,'waiting…',{size:15,fill:C.dim});
+  // balances
+  const bob=u>=c.a8.done+0.5?2:u>=c.a3.done+0.5?1:0;const bf=Math.max(fl(u,c.a3.done+0.5,1.2),fl(u,c.a8.done+0.5,1.2));
+  s+=R(900,768,160,68,{stroke:mix(C.line,C.g,bf),fill:mix(C.card,C.g,bf*0.35)})+T(916,792,'Bob',{size:15,fill:C.dim,anchor:'start'})+T(916,822,bob.toFixed(2)+' ETH',{size:21,mono:1,bold:1,anchor:'start'});
+  const tfz=Math.max(fl(u,c.t1.done,1.2),fl(u,c.t2.done,1.2),fl(u,c.t3.done,1.2));
+  s+=R(900,850,160,68,{stroke:mix(C.line,C.r,tfz)})+T(916,874,'Thief',{size:15,fill:C.dim,anchor:'start'})+T(916,904,'0.00 ETH',{size:21,mono:1,bold:1,anchor:'start',fill:mix(C.tx,C.r,tfz)});
+  // arrows
+  s+=L(342,843,366,843,{stroke:'#3d444d'})+L(672,843,698,843,{stroke:'#3d444d'})+L(872,802,898,802,{stroke:'#3d444d'});
+  // attacker lane
+  const at=[[b.l5,b.l6,'stolen laptop key + proof for the old root'],[b.l6,b.l7,'a key from another account + its proof'],[b.l7,b.l8,"Alice's real signature, recipient changed"]];
+  const ao=Math.min(K(u,b.l5,0.4),1-K(u,b.l8-0.2,0.4));
+  if(ao>0){let lab=at[0][2];for(const q of at)if(u>=q[0])lab=q[2];
+    s+=G(R(20,948,560,40,{rx:20,fill:'#2a1215',stroke:C.r})+T(44,975,'THIEF',{size:17,fill:C.r,bold:1,anchor:'start',ls:1})+T(118,975,lab,{size:17,anchor:'start'}),{op:ao})}
+  // pills
+  const dot=(x,y,col)=>{s+=`<circle cx="${x}" cy="${y}" r="17" fill="${col}" opacity="0.25"/><circle cx="${x}" cy="${y}" r="10" fill="${col}"/>`};
+  const fly=(k,thief,col,ok,pay)=>{const q=c[k];const t0=q.typed-0.3,t1=q.done;if(u<t0)return;
+    if(u<=t1){const f=(u-t0)/(t1-t0);
+      if(f<0.38){const e=ez(f/0.38);thief?dot(470,lp(946,922,e),col):dot(lp(336,366,e),843,col)}
+      else if(f<0.66){s+=R(370,768,300,150,{fill:'none',stroke:col,sw:5,op:1-Math.abs((f-0.52)/0.14)})}
+      else{dot(lp(674,696,ez((f-0.66)/0.34)),843,col)}}
+    else if(ok&&pay&&u<t1+0.5)dot(lp(874,894,ez((u-t1)/0.5)),802,col)};
+  fly('a2',0,C.g,1);fly('a3',0,C.g,1,1);fly('a4',0,C.g,1);fly('t1',1,C.r,0);fly('t2',1,C.r,0);fly('t3',1,C.r,0);fly('a8',0,C.g,1,1);
+  if(u>=c.a7.typed&&u<c.a7.done){const f=((u-c.a7.typed)/0.45)%1;dot(lp(366,336,ez(f)),843,C.b)}
+  // status
+  const st=[[0,'2 keys in the wallet  →  1 hash in the account',C.tx],[c.a2.start,'laptop signs: add the phone key',C.tx],[c.a2.done,'root changed · address unchanged',C.g],[c.a3.start,'phone signs and proves its key is in the tree',C.tx],[c.a3.done,'accepted · 1 ETH → Bob',C.g],
+    [b.l4+1.5,'the laptop is stolen',C.a],[c.a4.start,'phone signs: revoke the laptop key',C.tx],[c.a4.done,'laptop revoked · new root',C.g],
+    [c.t1.start,'attack 1 · stolen key + a proof for the old root',C.r],[c.t1.done,'refused · the proof does not match the current root',C.r],
+    [c.t2.start,'attack 2 · a key that is valid in another account',C.r],[c.t2.done,"refused · that key is not in Alice's tree",C.r],
+    [c.t3.start,'attack 3 · copy a real signature, change the recipient',C.r],[c.t3.done,'refused · the signature covers a different transaction',C.r],
+    [c.a5.done,'the wallet lost its copy of the tree',C.a],[c.a6.done,'no tree → no proof → cannot pay',C.a],[c.a7.typed,'rebuild the tree from account storage',C.b],[c.a7.done,'rebuilt root = on-chain root · restored',C.g],[c.a8.done,'accepted · 1 ETH → Bob',C.g]];
+  let cur=st[0];for(const q of st)if(u>=q[0])cur=q;
+  const so=1;
+  s+=R(20,1004,1040,56,{rx:12,fill:'#11161d',stroke:mix('#21262d',cur[2],0.55)})+`<circle cx="46" cy="1032" r="7" fill="${cur[2]}"/>`+T(68,1040,cur[1],{size:23,anchor:'start',fill:cur[2],bold:1,op:so});
+  return s;
+}
+
+
+function band2(u){
+  const c=TL.cmd,b=TL.beats,Q=TL.two;let s='';
+  s+=R(0,720,1080,360,{rx:0,fill:'#0a0e14',stroke:'none'})+L(0,721,1080,721,{stroke:'#21262d',sw:2});
+  const hd=(x,t)=>T(x,752,t,{size:14,fill:C.dim,anchor:'start',ls:1.5});
+  s+=hd(22,'HOME CHAIN · KEYS LIVE HERE')+hd(318,'RELAY · ANYONE')+hd(522,'CHAIN TWO · NO KEYS STORED')+hd(872,'ON CHAIN TWO');
+  let q=Q[0],qn=null;for(let i=0;i<Q.length;i++)if(u>=Q[i].t){q=Q[i];qn=Q[i+1]||null}
+  const home=Math.min(q.home+Math.max(0,Math.floor(u-q.t+0.6)),qn?qn.home:1e9);
+  let root=TL.roots[0],rt=-9;for(const r of TL.roots)if(u>=r.t){root=r;rt=r.t}
+  const rf=rt>b.m1?fl(u,rt):0;
+  const H1=Q.find(x=>x.sv>0).sv,WIN=TL.window;
+  const ev=[['b1',1,'sv dy','checked the seal · stored @'+H1,C.g],['b2',1,'sv','phone key is in root @'+H1,C.g],['b4',1,'sv dy','seal ok · stored the newer root',C.g],
+    ['u1',0,'sv','seal is not from the home signer',C.r],['u2',0,'sv','proof is for @'+H1+' · not the newest',C.r],['u3',2,'dy','@'+H1+' is inside the window',C.a],['b5',1,'sv dy','stored a newer root',C.g],['u4',0,'dy','@'+H1+' left the window',C.r]];
+  let last=null;for(const e of ev)if(c[e[0]]&&u>=c[e[0]].done)last=e;
+  let nx=1e9;for(const e of ev)if(c[e[0]]&&c[e[0]].start>(last?c[last[0]].done:1e9))nx=Math.min(nx,c[e[0]].start);
+  const lo=last?Math.min(1,(u-c[last[0]].done)/0.15)*(1-K(u,Math.min(c[last[0]].done+4.6,nx-0.5,last[0]=='b2'?b.m4-0.6:1e9),0.5)):0;
+  const hit=k=>last&&last[2].includes(k)?lo:0;
+  s+=R(20,768,270,150,{stroke:mix(C.line,C.a,rf)});
+  s+=T(36,794,"Alice's account · root",{size:14,fill:C.dim,anchor:'start'});
+  s+=R(34,804,242,40,{rx:9,fill:mix('#0d1117',C.a,rf*0.3),stroke:mix(C.a,'#ffffff',rf*0.7),sw:2+rf*3});
+  s+=T(155,831,sh(root.root),{size:18,mono:1,bold:1,fill:mix(C.a,'#ffffff',rf)});
+  s+=T(36,872,'keys  '+root.keys.join(' · '),{size:16,fill:C.g,anchor:'start'});
+  s+=T(36,902,'home block #'+home,{size:15,fill:C.dim,anchor:'start',mono:1});
+  s+=L(294,843,514,843,{stroke:'#3d444d'});
+  s+=R(318,810,172,66,{rx:10,fill:'#11161d'})+T(404,837,'signed block',{size:15})+T(404,860,'+ storage proof',{size:15,fill:C.dim});
+  const box=(y,k,name,tier,h,sub)=>{const o=hit(k),col=last?last[4]:C.line;let a='';
+    a+=R(520,y,330,70,{stroke:mix(C.line,col,o),sw:2+o*2,fill:mix(C.card,col,o*0.14)});
+    a+=T(536,y+25,name,{size:17,bold:1,anchor:'start'})+T(536+name.length*10.6+10,y+25,tier,{size:13,fill:C.a,anchor:'start'});
+    a+=T(836,y+26,h?'@'+h:'none yet',{size:17,mono:1,bold:1,fill:h?C.a:C.dim,anchor:'end'});
+    return a};
+  s+=box(768,'sv','savings','tier 2',q.sv);
+  s+=T(536,820,hit('sv')>0.05?(last[1]==1?'✓ ':last[1]==2?'! ':'✗ ')+last[3]:'accepts the newest home root only',{size:13.5,fill:hit('sv')>0.05?last[4]:C.dim,anchor:'start',bold:hit('sv')>0.05?1:undefined});
+  s+=box(848,'dy','daily','tier 1',q.dy).replace(/y="873"/g,'y="871"').replace(/y="874"/g,'y="872"');
+  if(hit('dy')>0.05&&!last[2].includes('sv'))s+=T(536,898,(last[1]==1?'✓ ':last[1]==2?'! ':'✗ ')+last[3],{size:13.5,fill:last[4],anchor:'start',bold:1});
+  else if(q.dy){const x0=536,x1=836,lo_=q.dy-WIN+1,px=v=>x0+(x1-x0)*(v-lo_)/(WIN-1);const inside=H1>=lo_;
+    s+=T(536,894,'accepts @'+Math.max(1,lo_)+' … @'+q.dy,{size:13,fill:C.dim,anchor:'start'});
+    s+=R(x0,902,x1-x0,8,{rx:4,fill:'#11161d',stroke:'#30363d',sw:1});
+    const mx=Math.max(x0+6,Math.min(x1-6,px(H1)));
+    s+=`<circle cx="${mx}" cy="906" r="6" fill="${inside?C.a:C.r}"/>`+T(836,894,(inside?'@'+H1+' inside':'@'+H1+' outside'),{size:13,fill:inside?C.a:C.r,anchor:'end',bold:1})}
+  else s+=T(536,900,'accepts any root of the last '+WIN+' home blocks',{size:13.5,fill:C.dim,anchor:'start'});
+  const bf=fl(u,c.b2.done,1.2),tf=c.u3?fl(u,c.u3.done,1.6):0,stolen=q.thief>1;
+  s+=R(870,768,190,70,{stroke:mix(C.line,C.g,bf),fill:mix(C.card,C.g,bf*0.35)})+T(886,792,'Bob',{size:15,fill:C.dim,anchor:'start'})+T(886,824,q.bob.toFixed(2)+' ETH',{size:21,mono:1,bold:1,anchor:'start'});
+  s+=R(870,848,190,70,{stroke:stolen?C.r:C.line,fill:mix(C.card,C.r,tf*0.4),sw:stolen?3:2})+T(886,872,'Thief',{size:15,fill:C.dim,anchor:'start'})+T(886,904,q.thief.toFixed(2)+' ETH',{size:21,mono:1,bold:1,anchor:'start',fill:stolen?C.r:C.tx});
+  const dot=(x,y,col)=>{s+=`<circle cx="${x}" cy="${y}" r="17" fill="${col}" opacity="0.25"/><circle cx="${x}" cy="${y}" r="10" fill="${col}"/>`};
+  const relay=k=>{const z=c[k];if(!z||u<z.typed||u>z.done)return;const f=(u-z.typed)/(z.done-z.typed);
+    if(f<0.6)dot(lp(296,512,ez(f/0.6)),843,C.g);else{const e=ez((f-0.6)/0.4);dot(lp(505,514,e),lp(843,803,e),C.g);dot(lp(505,514,e),lp(843,883,e),C.g)}};
+  relay('b1');relay('b4');relay('b5');
+  const hitdot=(k,y,col)=>{const z=c[k];if(!z||u<z.typed-0.3||u>z.done)return;const f=(u-z.typed+0.3)/(z.done-z.typed+0.3);dot(680,lp(946,y,ez(f)),col)};
+  hitdot('u1',842,C.r);hitdot('u2',842,C.r);hitdot('u3',922,C.r);hitdot('u4',922,C.r);
+  const at=[[c.u1.start,'a home block sealed with his own key'],[c.u2.start,'stolen phone key + proof for the old root @'+H1],[c.u3.start,'same key, same old proof → the daily account'],[c.u4.start,'the same proof again, after the window']];
+  const ao=K(u,c.u1.start-0.3,0.4)*(1-win(u,TL.notes.wait,c.u4.start,0.3));
+  if(ao>0){let lab=at[0][1];for(const z of at)if(u>=z[0])lab=z[1];
+    s+=G(R(20,948,640,40,{rx:20,fill:'#2a1215',stroke:C.r})+T(44,975,'THIEF',{size:17,fill:C.r,bold:1,anchor:'start',ls:1})+T(118,975,lab,{size:17,anchor:'start'}),{op:ao})}
+  const wt=TL.notes.wait;
+  const st=[[b.m1,'second chain · her accounts hold no keys, only a pointer home',C.tx],[c.b1.start,'relay a signed home block to chain two',C.tx],[c.b1.done,'both accounts checked the seal and stored home root @'+H1,C.g],
+    [c.b2.start,'phone signs on chain two · proof against the home root',C.tx],[c.b2.done,'accepted on chain two · 1 ETH → Bob',C.g],
+    [b.m4,'the phone is stolen',C.a],[c.b3.start,'vault signs at home: revoke the phone key',C.tx],[c.b3.done,'phone revoked at home · relaying the new block',C.g],[c.b4.done,'chain two now knows the new root',C.g],
+    [c.u1.start,'attack 1 · a forged home block',C.r],[c.u1.done,'refused · the seal is not from the home signer',C.r],
+    [c.u2.start,'attack 2 · stolen key + old proof → savings (tier 2)',C.r],[c.u2.done,'refused · tier 2 accepts the newest root only',C.r],
+    [c.u3.start,'attack 3 · same key, same proof → daily (tier 1)',C.r],[c.u3.done,'ACCEPTED · the old root is still inside the window · −2 ETH',C.a],
+    [wt,'home blocks keep coming · the old root ages out',C.tx],[c.b5.done,'root @'+H1+' is now outside the '+WIN+'-block window',C.g],[c.u4.start,'attack 3 again · same key, same proof',C.r],[c.u4.done,'refused · the proof is too old for tier 1',C.r]];
+  let cur=st[0];for(const z of st)if(u>=z[0])cur=z;
+  s+=R(20,1004,1040,56,{rx:12,fill:'#11161d',stroke:mix('#21262d',cur[2],0.55)})+`<circle cx="46" cy="1032" r="7" fill="${cur[2]}"/>`+T(68,1040,cur[1],{size:22,anchor:'start',fill:cur[2],bold:1});
+  return s;
+}
+
+function acct(x,y,w,h,title,line2,o={}){return G(R(x,y,w,h,{rx:18,stroke:o.stroke??C.line,sw:3})+T(x+28,y+46,title,{size:28,anchor:'start',bold:1,mono:1})+(line2?T(x+28,y+92,line2,{size:26,anchor:'start',fill:o.c2??C.dim,mono:o.m2}):''),{op:o.op})}
+
+function intro(t){
+  let s='';const S=TL.starts;
+  const leak=W('i2','leaks'),cant=W('i2','cannot'),move=W('i2','abandon'),hope=W('i2','new'),mv2=W('i2','move'),tB=S.i3-0.25;
+  const oA=1-K(t,tB,0.35);
+  if(oA>0){let a='';
+    const sx=lp(300,60,K(t,move-0.2,0.7));
+    a+=T(540,205,'TODAY',{size:22,fill:C.dim,ls:6,op:K(t,0.1,0.5)});
+    a+=acct(sx,270,480,130,'0x…cafe8403','100 ETH',{op:K(t,0.2,0.5)});
+    const kx=sx+240,red=K(t,leak,0.3),kc=mix(C.tx,C.r,red);
+    const ko=K(t,W('i1','one')-0.1,0.4);
+    a+=G(L(kx,400,kx,500,{stroke:kc,sw:4})+`<circle cx="${kx}" cy="560" r="62" fill="${mix(C.card,'#2a1215',red)}" stroke="${kc}" stroke-width="3"/>`+keyicon(kx-8,560,kc,1)+T(kx,662,red>0.5?'LEAKED':'one key',{size:26,fill:kc,bold:1}),{op:ko});
+    a+=G(R(kx+18,432,270,40,{rx:20,fill:'#1c2128',stroke:C.a})+T(kx+153,459,'cannot be changed',{size:20,fill:C.a,bold:1}),{op:K(t,cant,0.3)*(1-K(t,move-0.3,0.3))});
+    const to=K(t,leak+0.4,0.4),tx_=lp(820,300,K(t,move-0.2,0.7)),ty=830;
+    a+=G(R(tx_-150,ty-50,300,100,{rx:18,fill:'#2a1215',stroke:C.r,sw:3})+T(tx_-122,ty-10,'THIEF',{size:20,fill:C.r,bold:1,anchor:'start',ls:2})+T(tx_-122,ty+24,'has the same key',{size:22,anchor:'start'}),{op:to});
+    const no=K(t,move,0.5);
+    a+=acct(580,270,440,130,'0x…new','new address',{op:no,stroke:C.g});
+    a+=G(L(sx+20,335,sx+460,335,{stroke:C.r,sw:5})+R(sx+150,414,180,34,{rx:17,fill:'#2a1215',stroke:C.r})+T(sx+240,438,'abandoned',{size:19,fill:C.r,bold:1}),{op:K(t,move+0.3,0.4)});
+    const race=cl((t-mv2)/(S.i3-0.7-mv2));
+    if(no>0){const bar=(y,lab,col,f)=>T(560,y+31,lab,{size:22,anchor:'start',fill:col,bold:1})+R(560,y+44,460,20,{rx:10,fill:'#11161d'})+R(560,y+44,Math.max(20,460*f),20,{rx:10,fill:col,stroke:col});
+      a+=G(bar(520,'move every coin and token',C.a,race*0.9)+bar(620,'update every app that knows you',C.a,Math.pow(race,1.6)*0.6),{op:K(t,mv2-0.2,0.4)});
+      a+=T(790,800,'a new address, from zero',{size:32,bold:1,fill:C.a,op:K(t,hope,0.4)})}
+    s+=G(a,{op:oA});
+  }
+  const oB=K(t,tB+0.15,0.5);
+  if(oB>0){let a='';const add=W('i4','add'),swap=W('i4','swap'),rev=W('i4','revoke'),same=W('i4','stays'),run=W('i4',"let's");
+    a+=T(540,225,'ERC-8403',{size:64,bold:1,fill:C.a});
+    a+=T(540,268,'Account Authority Lifecycle',{size:24,fill:C.dim});
+    const rs=[[0,'0x7f3a91…04c2e9'],[add+0.25,'0xb81c5d…aa3170'],[swap+0.25,'0x2e904b…77d1f6'],[rev+0.25,'0xc4d7e0…19b85a']];
+    let r=rs[0];for(const q of rs)if(t>=q[0])r=q;const rf=r[0]?fl(t,r[0],1.0):0;
+    const ho=K(t,W('i3','stores')-0.1,0.5),sm=K(t,same-0.1,0.4);
+    a+=R(250,310,580,170,{rx:18,sw:3,stroke:mix(C.line,C.g,sm*0.8)});
+    a+=T(278,356,'0x…cafe8403',{size:28,anchor:'start',bold:1,mono:1});
+    a+=G(R(596,328,214,38,{rx:19,fill:'#12261a',stroke:C.g})+T(703,354,'same address',{size:19,fill:C.g,bold:1}),{op:sm});
+    a+=G(T(278,404,'one hash',{size:17,fill:C.dim,anchor:'start',ls:2})+R(274,414,532,50,{rx:10,fill:mix('#0d1117',C.a,rf*0.9),stroke:C.a})+T(540,448,r[1],{size:27,mono:1,bold:1,fill:mix(C.a,'#0d1117',rf)}),{op:ho});
+    const xs=[210,430,650,870],ly=640,tt=W('i3','tree');
+    const lv=[{n:'laptop',t:tt,dead:t>=rev+0.25},{n:t>=swap+0.25?'new phone':'phone',t:tt+0.35,sw:fl(t,swap+0.25,1.0)},{n:'vault',t:tt+0.7},{n:'tablet',t:add+0.25,pop:1}];
+    lv.forEach((q,i)=>{const o=K(t,q.t,0.4);if(o<=0)return;const col=q.dead?C.r:C.line,p=fl(t,q.t,1.0)*(q.pop||0);
+      a+=L(xs[i],ly,540,480,{stroke:col,op:o*(q.dead?0.4:1),dash:q.dead?'7 8':undefined,sw:4});
+      a+=G(R(-100,0,200,70,{rx:14,sw:3,stroke:q.dead?C.r:q.sw>0?mix(C.line,C.b,q.sw):p>0?mix(C.line,C.g,p):C.line,fill:mix(mix(C.card,C.b,(q.sw||0)*0.6),C.g,p*0.6),dash:q.dead?'7 6':undefined})+keyicon(-60,35,q.dead?C.r:C.dim,0.42)+T(-32,43,q.n,{size:20,anchor:'start',fill:q.dead?C.r:C.tx,strike:q.dead}),{tf:`translate(${xs[i]},${ly}) scale(${lp(0.6,1,o)})`,op:o*(q.dead?0.8:1)})});
+    const tag=(x,t0,txt,col)=>G(R(x-80,740,160,36,{rx:18,fill:'#11161d',stroke:col})+T(x,765,txt,{size:19,fill:col,bold:1}),{op:K(t,t0,0.3)});
+    a+=tag(xs[3],add+0.25,'+ add',C.g)+tag(xs[1],swap+0.25,'⇄ swap',C.b)+tag(xs[0],rev+0.25,'✕ revoke',C.r);
+    a+=G(R(250,880,580,84,{rx:42,fill:'#12261a',stroke:C.g,sw:3})+`<path d="M292,902 L292,942 L324,922 Z" fill="${C.g}"/>`+T(574,932,'live on a Nethermind node',{size:30,bold:1,fill:C.g}),{op:K(t,run,0.4)});
+    s+=G(a,{op:oB*(1-K(t,TL.TI-0.3,0.3))});
+  }
+  return s;
+}
+
+function closing(c){
+  let s='';const S=k=>TL.starts[k]-TL.TC,Wc=(k,w,n)=>W(k,w,n)-TL.TC;
+  const o1=win(c,0,S('c2')-0.15,0.35);
+  if(o1>0){let a='';const t1=Wc('c1','one'),bt=Wc('c1','but'),t2=Wc('c1','two'),rv=Wc('c1','revoke');
+    const Qf=TL.two[TL.two.length-1],lost=TL.two[0].dyb-Qf.dyb;
+    a+=T(540,225,'THE TRADE',{size:22,fill:C.dim,ls:6});
+    const col=(x,title,sub,rows,o,cc)=>G(R(x,270,470,470,{rx:18,sw:3,stroke:cc})+T(x+235,326,title,{size:40,bold:1,fill:cc})+T(x+235,362,sub,{size:19,fill:C.dim})+rows.map((r,i)=>G(R(x+24,400+i*104,422,84,{rx:14,fill:'#11161d',stroke:r[2]})+T(x+235,436+i*104,r[0],{size:21,bold:1,fill:r[2]})+T(x+235,466+i*104,r[1],{size:16,fill:C.dim}),{op:K(c,r[3],0.35)})).join(''),{op:o});
+    a+=col(50,'Tier 1','names a recent root',[['cheap check',' proof + one committed root',C.g,t1+0.6],['fits the public mempool','no changing state is read',C.g,t1+1.6],['a revoked key lives on','until the window closes',C.r,bt+0.2]],K(c,t1-0.2,0.4),C.a);
+    a+=col(560,'Tier 2','reads the newest root',[['reads one changing slot','the check depends on live state',C.dim,t2+0.5],['gives up the cheap tier','that is the price of the read',C.dim,t2+1.3],['revoke bites at once','the old proof is dead',C.g,rv-0.1]],K(c,t2-0.2,0.4),C.b);
+    a+=G(T(540,812,'in this run',{size:19,fill:C.dim,ls:2})+T(285,868,'daily lost '+lost.toFixed(0)+' ETH',{size:32,bold:1,mono:1,fill:C.r})+T(795,868,'savings lost 0 ETH',{size:32,bold:1,mono:1,fill:C.g})+T(540,920,'same stolen key · same old proof · read from chain two',{size:20,fill:C.dim})+T(540,966,'shown live: the revocation side · the cheap-check side needs EIP-8272 recent roots',{size:17,fill:C.dim}),{op:K(c,rv+0.6,0.4)});
+    s+=G(a,{op:o1})}
+  const o2=win(c,S('c2')-0.1,S('c3')-0.15,0.35);
+  if(o2>0){let a='';const pk=Wc('c2','passkey'),pq=Wc('c2','post-quantum');
+    a+=T(540,225,'A LEAF CAN BE ANY KIND OF KEY',{size:22,fill:C.dim,ls:4});
+    a+=R(300,280,480,110,{rx:18,sw:3,stroke:C.a})+T(540,326,'account',{size:20,fill:C.dim})+T(540,366,'root '+sh(TL.roots[TL.roots.length-1].root),{size:26,mono:1,bold:1,fill:C.a});
+    const xs=[200,540,880],lv=[['ECDSA key','today',C.dim,0],['passkey','P-256',C.b,pk],['post-quantum key','hash-based',C.p,pq]];
+    lv.forEach((q,i)=>{const h=q[3]?K(c,q[3]-0.1,0.4):0,p=q[3]?fl(c,q[3],1.2):0;const col=i==0?C.line:mix(C.line,q[2],h);
+      a+=L(xs[i],560,540,390,{stroke:col,sw:4});
+      a+=G(R(-150,0,300,130,{rx:16,sw:3,stroke:col,fill:mix(C.card,q[2],p*0.5)})+keyicon(0,40,i==0?C.dim:mix(C.dim,q[2],h),0.6)+T(0,90,q[0],{size:26,bold:1,fill:i==0?C.tx:mix(C.dim,C.tx,h)})+T(0,116,q[1],{size:17,fill:C.dim}),{tf:`translate(${xs[i]},560) scale(${1+p*0.06})`})});
+    a+=T(540,790,'each leaf names how it is checked',{size:26,fill:C.tx,op:K(c,pk,0.5)});
+    a+=T(540,830,'the account logic stays the same',{size:22,fill:C.dim,op:K(c,pq,0.5)});
+    s+=G(a,{op:o2})}
+  const o3=win(c,S('c3')-0.1,S('c4')-0.15,0.35);
+  if(o3>0){let a='';const one=Wc('c3','one'),mv=Wc('c3','move'),pr=Wc('c3','proof'),rd=Wc('c3','roadmap');
+    a+=T(540,225,'WHERE THIS CAN GO',{size:22,fill:C.dim,ls:4});
+    const ys=[300,400,500,600];
+    ys.forEach((y,i)=>{const o=K(c,one-0.3+i*0.15,0.35);a+=G(R(60,y,330,76,{rx:14,sw:3,stroke:C.a})+T(84,y+32,'account '+(i+1),{size:17,fill:C.dim,anchor:'start'})+T(84,y+60,['0x3c9d…90b6','0x91be…07aa','0xf02c…5d13','0x6a7e…c8e4'][i],{size:22,mono:1,bold:1,fill:C.a,anchor:'start'})+T(372,y+46,'1 hash',{size:17,fill:C.dim,anchor:'end'}),{op:o});
+      a+=L(398,y+38,548,lp(y+38,488,0.8),{stroke:'#3d444d',op:K(c,mv-0.2,0.4),dash:'5 7'})});
+    ys.forEach((y,i)=>{const m=((c-mv-i*0.3)/1.1);if(c>mv&&m>0){const f=ez(m%1);const px=lp(402,536,f),py=lp(y+38,lp(y+38,488,0.8),f);a+=`<circle cx="${px}" cy="${py}" r="18" fill="${C.b}" opacity="0.25"/><circle cx="${px}" cy="${py}" r="10" fill="${C.b}"/>`}});
+    const po=K(c,mv-0.2,0.5),pf=fl(c,pr,1.4);
+    a+=G(R(560,380,300,216,{rx:20,sw:4,stroke:C.p,fill:mix('#1a1326',C.p,pf*0.4)})+T(710,430,'one proof',{size:34,bold:1,fill:C.p})+T(710,466,'for the whole block',{size:21,fill:C.tx})+T(710,520,'✓ every key is in its tree',{size:17,fill:C.g})+T(710,548,'✓ every key signed',{size:17,fill:C.g})+T(710,580,'EIP-8288 (draft)',{size:15,fill:C.dim}),{op:po});
+    a+=G(L(864,488,912,488,{stroke:'#3d444d',sw:4})+R(916,410,110,156,{rx:14,sw:3})+T(971,496,'block',{size:22,bold:1}),{op:K(c,pr-0.3,0.5)});
+    a+=G(R(190,760,700,60,{rx:30,fill:'#1a1326',stroke:C.p})+T(540,799,"Ethereum's post-quantum roadmap",{size:26,bold:1,fill:C.p}),{op:K(c,rd-0.9,0.5)});
+    a+=T(60,712,'● signature + tree proof',{size:17,fill:C.b,anchor:'start',op:K(c,mv,0.4)});
+    a+=T(540,880,'a direction · not built in this demo',{size:21,fill:C.dim,op:K(c,mv,0.5)});
+    s+=G(a,{op:o3})}
+  const o4=K(c,S('c4')-0.1,0.4);
+  if(o4>0){let a='';const ns=Wc('c4','draft')+0.3,sp=Wc('c4','spec');
+    a+=T(540,300,'ERC-8403',{size:92,bold:1,fill:C.a});
+    a+=T(540,356,'Account Authority Lifecycle',{size:32});
+    a+=G(R(465,386,150,40,{rx:20,fill:'#1c2128',stroke:C.a})+T(540,414,'DRAFT',{size:20,bold:1,fill:C.a,ls:4}),{});
+    a+=G(R(140,500,800,96,{rx:16,sw:3})+T(540,540,'what this demo trusts',{size:19,fill:C.dim,ls:2})+T(540,578,'the single block signer of the home chain',{size:26}),{op:K(c,ns-0.1,0.4)});
+    a+=G(T(540,700,'spec  ·  github.com/ethereum/ERCs/pull/1979',{size:27,mono:1,fill:C.b})+T(540,748,'discussion  ·  ethereum-magicians.org/t/29570',{size:23,mono:1,fill:C.dim}),{op:K(c,sp-0.3,0.4)});
+    a+=T(540,900,'demo: minimal accounts on two local Nethermind frame-transaction nodes',{size:19,fill:C.dim});
+    a+=T(540,960,'Daniil Ankushin',{size:28,bold:1});
+    s+=G(a,{op:o4})}
+  return s;
+}
+
+window.render=t=>{
+  let s=`<rect width="1080" height="1080" fill="${C.bg}"/>`;
+  if(t<TL.TI)s+=intro(t);else if(t<TL.TC)s+=(t-TL.TI<TL.beats.m1?band(t-TL.TI):band2(t-TL.TI));else s+=closing(t-TL.TC);
+  document.getElementById('s').innerHTML=s;subs(t);
+};
+window.init=tl=>{TL=tl;render(0)};
+</script>

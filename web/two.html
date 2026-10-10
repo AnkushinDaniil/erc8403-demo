@@ -1,0 +1,45 @@
+<!doctype html><meta charset=utf-8><title>Chain two · local explorer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d1117;color:#e6edf3;font:18px "DejaVu Sans",sans-serif;padding:22px 26px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:#8b949e;font-size:15px;margin-bottom:16px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 18px;margin-bottom:14px}
+.lab{color:#8b949e;font-size:14px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.mono{font-family:"DejaVu Sans Mono",monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two .card{margin:0 0 14px}
+.name{font-size:21px;font-weight:bold}.tier{color:#d29922;font-size:15px;margin:2px 0 10px}
+.h{font-size:26px;font-weight:bold;border-radius:8px;padding:2px 6px;margin:0 -6px;display:inline-block}
+.flash{animation:fl 1.6s ease-out}@keyframes fl{0%{background:#d29922;color:#000}100%{background:transparent}}
+.small{color:#8b949e;font-size:14px;margin-top:4px}.big{font-size:24px;font-weight:bold;margin-top:2px}
+#sync{position:fixed;right:0;bottom:0;width:24px;height:24px;background:#000}
+</style>
+<h1>Chain two <span class=mono>· Alice's accounts</span></h1>
+<div class=sub>second local Nethermind node · chain 81411 · block <b id=blk>…</b> · home chain is at block <b id=hblk>…</b></div>
+<div class=two>
+<div class=card id=sv><div class=name>savings <span class=mono style="font-weight:normal;font-size:15px">0x…cafe8403</span></div><div class=tier>tier 2 · newest home root only</div>
+<div class=lab>newest home root</div><div class="h mono" id=svh>…</div><div class=small id=svw>&nbsp;</div><div class=lab style="margin-top:10px">balance</div><div class="big mono" id=svb>…</div></div>
+<div class=card id=dy><div class=name>daily <span class=mono style="font-weight:normal;font-size:15px">0x…cafe8401</span></div><div class=tier>tier 1 · any root of the last 40 home blocks</div>
+<div class=lab>newest home root</div><div class="h mono" id=dyh>…</div><div class=small id=dyw>&nbsp;</div><div class=lab style="margin-top:10px">balance</div><div class="big mono" id=dyb>…</div></div>
+</div>
+<div class=two>
+<div class=card><div class=lab>Bob</div><div class="big mono" id=bb>…</div></div>
+<div class=card id=btc><div class=lab>Thief</div><div class="big mono" id=bt>…</div></div>
+</div>
+<div id=sync></div>
+<script>
+const SV='0x00000000000000000000000000000000cafe8403',DY='0x00000000000000000000000000000000cafe8401',BOB='0x0000000000000000000000000000000000000b0b',TH='0x0000000000000000000000000000000000000bad';
+let id=0;async function rpc(m,p,u='/rpc2'){const r=await fetch(u,{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:++id,method:m,params:p})});return (await r.json()).result}
+const eth=async a=>(Number(BigInt(await rpc('eth_getBalance',[a,'latest']))/10n**14n)/1e4).toFixed(2)+' ETH';
+const last={};
+function seth(id,h){const e=document.getElementById(id);const t=h?'home block @'+h:'none yet';if(last[id]!==t){e.textContent=t;if(last[id]!==undefined){e.classList.remove('flash');void e.offsetWidth;e.classList.add('flash')}last[id]=t}}
+async function tick(){try{
+  const sv=parseInt(await rpc('eth_getStorageAt',[SV,'0x2','latest']),16),dy=parseInt(await rpc('eth_getStorageAt',[DY,'0x2','latest']),16);
+  seth('svh',sv);seth('dyh',dy);
+  document.getElementById('svw').textContent=sv?'accepts proofs for @'+sv+' only':'no home block imported';
+  document.getElementById('dyw').textContent=dy?'accepts proofs for @'+Math.max(1,dy-39)+' … @'+dy:'no home block imported';
+  document.getElementById('blk').textContent=parseInt(await rpc('eth_blockNumber',[]),16);
+  document.getElementById('hblk').textContent=parseInt(await rpc('eth_blockNumber',[],'/rpc'),16);
+  document.getElementById('svb').textContent=await eth(SV);document.getElementById('dyb').textContent=await eth(DY);
+  document.getElementById('bb').textContent=await eth(BOB);document.getElementById('bt').textContent=await eth(TH);
+}catch(e){}setTimeout(tick,250)}
+tick();window.sync=v=>document.getElementById('sync').style.background=v?'#fff':'#000';
+</script>

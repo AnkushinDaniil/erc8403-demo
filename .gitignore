@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+out/
+wallet/tree.json
+wallet/sent.log
+mc/proofs/
+rec/gate/
+rec/chrome-profile/
+rec/*.mkv

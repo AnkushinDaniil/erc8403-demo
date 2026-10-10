@@ -1,0 +1,50 @@
+ok
+terms
+BEAT l1  0.60
+CMD a1 start 1.10 typed 1.90 done 2.28
+BEAT l2  7.22
+CMD a2 start 7.48 typed 9.03 done 11.21
+BEAT l3  14.88
+CMD a3 start 15.18 typed 16.73 done 18.30
+BEAT l4  19.90
+CMD a4 start 21.49 typed 23.15 done 25.14
+BEAT l5  28.81
+CMD t1 start 30.77 typed 31.76 done 32.05
+BEAT l6  36.30
+CMD t2 start 39.46 typed 40.62 done 41.03
+BEAT l7  43.11
+CMD t3 start 45.36 typed 46.57 done 46.85
+BEAT l8  52.11
+CMD a5 start 52.59 typed 53.67 done 53.69
+CMD a6 start 54.22 typed 55.76 done 56.09
+BEAT l9  57.59
+CMD a7 start 57.74 typed 58.66 done 58.98
+CMD a8 start 60.29 typed 61.83 done 64.22
+BEAT m1  66.22
+TWO {'t': 67.73261833190918, 'tag': 'start', 'sv': 0, 'dy': 0, 'bob': 1e-18, 'thief': 1e-18, 'svb': 100.0, 'dyb': 5.0, 'home': 81, 'root': '3c9d6c5bf257c96c6a841b95fb8a9c35e536e34669752681da398ffc5ec190b6'}
+BEAT m2  72.24
+CMD b1 start 72.54 typed 73.09 done 74.35
+TWO {'t': 74.34848237037659, 'tag': 'relay1', 'sv': 87, 'dy': 87, 'bob': 1e-18, 'thief': 1e-18, 'svb': 100.0, 'dyb': 5.0, 'home': 88, 'root': '3c9d6c5bf257c96c6a841b95fb8a9c35e536e34669752681da398ffc5ec190b6'}
+BEAT m3  79.64
+CMD b2 start 79.84 typed 81.73 done 82.26
+TWO {'t': 82.25769400596619, 'tag': 'pay', 'sv': 87, 'dy': 87, 'bob': 1.0, 'thief': 1e-18, 'svb': 98.99984491127387, 'dyb': 5.0, 'home': 96, 'root': '3c9d6c5bf257c96c6a841b95fb8a9c35e536e34669752681da398ffc5ec190b6'}
+BEAT m4  84.07
+CMD b3 start 85.16 typed 86.77 done 88.32
+CMD b4 start 88.92 typed 89.43 done 90.16
+TWO {'t': 90.16305160522461, 'tag': 'relay2', 'sv': 103, 'dy': 103, 'bob': 1.0, 'thief': 1e-18, 'svb': 98.99984491127387, 'dyb': 5.0, 'home': 104, 'root': '66b0f9ced1af1bf72232b1b17c048d11b40fc7de316556ff23a36f81e5c9a210'}
+BEAT m5  94.14
+CMD u1 start 94.51 typed 95.63 done 96.18
+TWO {'t': 96.18181896209717, 'tag': 'u1', 'sv': 103, 'dy': 103, 'bob': 1.0, 'thief': 1e-18, 'svb': 98.99984491127387, 'dyb': 5.0, 'home': 110, 'root': '66b0f9ced1af1bf72232b1b17c048d11b40fc7de316556ff23a36f81e5c9a210'}
+BEAT m6  98.92
+CMD u2 start 102.48 typed 103.87 done 104.17
+TWO {'t': 104.17150115966797, 'tag': 'u2', 'sv': 103, 'dy': 103, 'bob': 1.0, 'thief': 1e-18, 'svb': 98.99984491127387, 'dyb': 5.0, 'home': 118, 'root': '66b0f9ced1af1bf72232b1b17c048d11b40fc7de316556ff23a36f81e5c9a210'}
+BEAT m7  106.74
+CMD u3 start 108.92 typed 110.20 done 110.69
+TWO {'t': 110.6917016506195, 'tag': 'u3', 'sv': 103, 'dy': 103, 'bob': 1.0, 'thief': 2.0, 'svb': 98.99984491127387, 'dyb': 2.9998705313950658, 'home': 124, 'root': '66b0f9ced1af1bf72232b1b17c048d11b40fc7de316556ff23a36f81e5c9a210'}
+CMD b5 start 115.75 typed 116.91 done 117.65
+TWO {'t': 117.64578223228455, 'tag': 'relay3', 'sv': 131, 'dy': 131, 'bob': 1.0, 'thief': 2.0, 'svb': 98.99984491127387, 'dyb': 2.9998705313950658, 'home': 131, 'root': '66b0f9ced1af1bf72232b1b17c048d11b40fc7de316556ff23a36f81e5c9a210'}
+BEAT m8  117.65
+CMD u4 start 118.42 typed 119.70 done 119.95
+TWO {'t': 119.94819855690002, 'tag': 'u4', 'sv': 131, 'dy': 131, 'bob': 1.0, 'thief': 2.0, 'svb': 98.99984491127387, 'dyb': 2.9998705313950658, 'home': 133, 'root': '66b0f9ced1af1bf72232b1b17c048d11b40fc7de316556ff23a36f81e5c9a210'}
+END 123.82 thief 1
+128.566000
