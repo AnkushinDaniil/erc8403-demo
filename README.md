@@ -54,6 +54,19 @@ The run takes about two minutes. Most of that time is the wait for the tier 1 wi
 
 The nodes listen on `127.0.0.1:8621` (home chain) and `127.0.0.1:8612` (chain two). `web/serve.py` serves a small explorer on `127.0.0.1:8700`.
 
+## SLOTS16 with NO_MANAGE
+
+`slots16/Account.yul` implements the `SLOTS16` scheme of the current ERC text: 16 slots, `validate` with the `NO_MANAGE` frame loop, and `setAuthorities` that refuses a set with no authority that may manage it. `slots16/test.py` starts one node, gives the account a manager key, adds a `NO_MANAGE` key in slot 10, and checks:
+
+- the `NO_MANAGE` key pays bob
+- the node refuses its call to `setAuthorities`, with an explicit or an empty target, alone or after a transfer
+- `setAuthorities` refuses a set with no manager, `2**160` alone, and a word of `2**161`
+- the manager revokes the `NO_MANAGE` key
+
+```
+SOLC=/path/to/solc-0.8.36 .venv/bin/python slots16/test.py
+```
+
 ## What is simplified
 
 - `yul/src/Account.yul` is a minimal account, not a full ERC-8403 implementation. Any key in the tree can set a new root.
