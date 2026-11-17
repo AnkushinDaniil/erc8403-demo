@@ -16,6 +16,7 @@ The account stores one hash: the root of a tree of its keys. A transaction carri
 | thief signs with the revoked laptop key and an old proof | refused by the node |
 | thief sends a proof that is valid for another account | refused by the node |
 | thief copies a signature from the chain and changes the recipient | refused by the node |
+| thief has a phone signature over another message and puts it in a transaction | refused by the node |
 | the local key tree is deleted, the wallet rebuilds it from account storage | root matches |
 | a relayer brings a sealed home block to chain two | both accounts check the seal and the storage proof |
 | the phone pays on chain two with a proof from the home chain | accepted |
@@ -24,8 +25,13 @@ The account stores one hash: the root of a tree of its keys. A transaction carri
 | thief uses the revoked phone key and an old proof on `savings` (tier 2) | refused by the node |
 | the same on `daily` (tier 1) | accepted, 2 ETH are gone |
 | the same on `daily` 40 home blocks later | refused by the node |
+| on fresh chains, thief uses the laptop key to set a tree with the laptop key only | accepted; the vault key is then refused |
 
 The accepted theft is on purpose. Tier 1 accepts any root inside its window, so a revoked key works until the window closes. Tier 2 accepts the newest root only.
+
+The takeover is also on purpose: in this minimal account every key may change the tree. `slots16/` adds `NO_MANAGE`, which stops a spending key from changing the set.
+
+The accounts refuse a signature entry that carries its own `msg`. EIP-8141 resolves the signer of such an entry from a signature over that `msg`, not over the transaction, so without this check a signature the key made for something else would pass. The accounts approve the scope that the frame asks for, not a fixed scope, so a sponsor can pay.
 
 ## Run
 
@@ -70,8 +76,9 @@ SOLC=/path/to/solc-0.8.36 .venv/bin/python slots16/test.py
 
 ## What is simplified
 
-- `yul/src/Account.yul` is a minimal account, not a full ERC-8403 implementation. Any key in the tree can set a new root.
+- `yul/src/Account.yul`, which `run.sh` uses, is a minimal account and not an ERC-8403 account: it has no `authorityRoot()`, its tree is not the `SLOTS16` tree, and any key in the tree can set a new root. The ERC-8403 account is `slots16/Account.yul`; run `slots16/test.py` to see it.
 - The home chain is Clique with one signer. Chain two trusts that signer and nothing else: `mc/sol/HomeVerifier.sol` recovers the signer from the header seal and checks the storage proof against the state root in that header. The relayer is not trusted.
+- Whoever holds that signer's key can make chain two accept any home storage root. The `forged-header` attack shows a different signer being refused; it does not cover the trusted signer itself.
 - The tier 1 window is counted by the account contract. It does not use EIP-8272.
 - Leaves are secp256k1 keys. There is no post-quantum key in the demo.
 - All private keys in the scripts are the public anvil test keys.

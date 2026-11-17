@@ -14,6 +14,7 @@ object "Remote" {
     }
     let pred := calldataload(32)
     if iszero(eq(verbatim_2i_1o(hex"b4", 0, 0x00), pred)) { revert(0, 0) }
+    if verbatim_2i_1o(hex"b4", 0, 0x02) { revert(0, 0) }
     mstore(0, calldataload(0))
     mstore(32, pred)
     let node := keccak256(0, 64)
@@ -37,6 +38,6 @@ object "Remote" {
     mstore(0x84, homeStorageRoot)
     if iszero(staticcall(gas(), 0x000000000000000000000000000000000000f00d, 0x80, size, 0, 32)) { revert(0, 0) }
     if iszero(eq(mload(0), node)) { revert(0, 0) }
-    verbatim_3i_0o(hex"aa", 0, 0, 3)
+    verbatim_3i_0o(hex"aa", 0, 0, verbatim_2i_1o(hex"b3", verbatim_1i_1o(hex"b0", 0x0a), 0x06))
   }
 }
