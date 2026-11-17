@@ -92,9 +92,11 @@ object "Account" {
           }
         }
         if iszero(manager) { revert(0, 0) }
-        sstore(0, root(0x100))
+        let next := root(0x100)
+        let changed := iszero(eq(next, sload(0)))
+        sstore(0, next)
         log1(0x100, 512, 0x83cb463cdb16a1f07dec96ec96c4f7a43dbac052f1975785c20893767dfb825a)
-        log2(0, 0, 0xb06c6c6d281c73dffabcd158f5eb66251a3124ac551dd9efe8897d6b24f76aae, sload(0))
+        if changed { log2(0, 0, 0xb06c6c6d281c73dffabcd158f5eb66251a3124ac551dd9efe8897d6b24f76aae, next) }
         stop()
       }
       case 0xce74c10b {
