@@ -62,6 +62,7 @@ The nodes listen on `127.0.0.1:8621` (home chain) and `127.0.0.1:8612` (chain tw
 - the node refuses its call to `setAuthorities`, with an explicit or an empty target, alone or after a transfer
 - `setAuthorities` refuses a set with no manager, `2**160` alone, and a word of `2**161`
 - the manager revokes the `NO_MANAGE` key
+- `authorityRoot()` returns the current root and `SLOTS16`, and `setAuthorities` emits `AuthorityStateChanged` with the new root, the discovery interface `IERC8403`
 
 ```
 SOLC=/path/to/solc-0.8.36 .venv/bin/python slots16/test.py

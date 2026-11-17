@@ -12,6 +12,9 @@ ACCT = bytes.fromhex("00000000000000000000000000000000cafe1616")
 SEL_VALIDATE = bytes.fromhex("806afe1e")
 SEL_SET = bytes.fromhex("1feb3d6a")
 TOPIC = "0x83cb463cdb16a1f07dec96ec96c4f7a43dbac052f1975785c20893767dfb825a"
+CHANGED = "0xb06c6c6d281c73dffabcd158f5eb66251a3124ac551dd9efe8897d6b24f76aae"
+SEL_ROOT = bytes.fromhex("ce74c10b")
+SLOTS16 = bytes.fromhex("d57d8ea8a9c7e0985d8cc400e0b7162f086f57e9b994099a71b0844e7b682b62")
 MANAGER, SPENDER = "laptop", "phone"
 
 
@@ -53,6 +56,10 @@ def check_data(preds, i):
 
 def set_data(preds):
     return SEL_SET + b"".join(w32(p) for p in preds)
+
+
+def authority_root():
+    return bytes.fromhex(rpc("eth_call", [{"to": "0x" + ACCT.hex(), "data": "0x" + SEL_ROOT.hex()}, "latest"])["result"][2:])
 
 
 def signer_int(name):
@@ -115,11 +122,14 @@ def main():
     first = start()
     try:
         check("first state root in slot 0", chain_root(ACCT) == sroot(first))
+        check("authorityRoot returns the first root and SLOTS16", authority_root() == sroot(first) + SLOTS16)
         cur = [signer_int(MANAGER)] + [0] * 9 + [signer_int(SPENDER) | NO_MANAGE] + [0] * 5
         r = send(first, MANAGER, sender_frame(ACCT, set_data(cur)))
         logs = r.get("receipt", {}).get("logs", [])
         check("manager adds a NO_MANAGE spender in slot 10", r["ok"] and chain_root(ACCT) == sroot(cur), r.get("error", r["stage"]))
         check("AuthoritySet log holds the new set", any(l["topics"] == [TOPIC] and bytes.fromhex(l["data"][2:]) == b"".join(w32(p) for p in cur) for l in logs))
+        check("AuthorityStateChanged log holds the new root", any(l["topics"] == [CHANGED, "0x" + sroot(cur).hex()] and l["data"] == "0x" for l in logs))
+        check("authorityRoot returns the new root and SLOTS16", authority_root() == sroot(cur) + SLOTS16)
         bob0 = balance(BOB)
         r = send(cur, SPENDER, sender_frame(BOB, value=10**18))
         check("NO_MANAGE key pays bob", r["ok"] and balance(BOB) == bob0 + 10**18, r.get("error", r["stage"]))
