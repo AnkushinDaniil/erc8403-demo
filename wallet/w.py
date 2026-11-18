@@ -65,14 +65,14 @@ def fees():
     return 1_000_000_000, bf * 2 + 2_000_000_000
 def nonce_of(acct):
     return int(rpc("eth_getTransactionCount", ['0x' + acct.hex(), 'pending'])['result'], 16)
-def body(sender, nonce, frames, sig, fee, signer=b''):
-    return [be(CHAIN), be(nonce), bytes(sender), [enc_frame(f) for f in frames], [[be(1), bytes(signer), b'', sig]], [be(fee[0]), be(fee[1]), b''], []]
-def sign_tx(sender, nonce, frames, priv, fee):
+def body(sender, nonce, frames, sig, fee, signer=b'', msg=b''):
+    return [be(CHAIN), be(nonce), bytes(sender), [enc_frame(f) for f in frames], [[be(1), bytes(signer), msg, sig]], [be(fee[0]), be(fee[1]), b''], []]
+def sign_tx(sender, nonce, frames, priv, fee, msg=b''):
     signer = keys.PrivateKey(priv).public_key.to_canonical_address()
-    digest = k256(b'\x06' + rlp.encode(body(sender, nonce, frames, b'', fee, signer)))
+    digest = msg or k256(b'\x06' + rlp.encode(body(sender, nonce, frames, b'', fee, signer)))
     s = keys.PrivateKey(priv).sign_msg_hash(digest)
     sig = bytes([s.v]) + s.r.to_bytes(32, 'big') + s.s.to_bytes(32, 'big')
-    return b'\x06' + rlp.encode(body(sender, nonce, frames, sig, fee, signer)), sig
+    return b'\x06' + rlp.encode(body(sender, nonce, frames, sig, fee, signer, msg)), sig
 def verify_frame(aid, addr, proof, gas=80000):
     sibs = (list(proof) + [b'\0' * 32] * 2)[:2]
     return [1, 3, b'', [gas, 0], 0, w32(aid) + w32(addr) + sibs[0] + sibs[1]]

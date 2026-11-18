@@ -20,6 +20,7 @@ object "Account" {
       let pred := verbatim_2i_1o(hex"b1", 32, fidx)
       let signer := verbatim_2i_1o(hex"b4", 0, 0x00)
       if iszero(eq(signer, pred)) { revert(0, 0) }
+      if verbatim_2i_1o(hex"b4", 0, 0x02) { revert(0, 0) }
       mstore(0, aid)
       mstore(32, pred)
       let node := keccak256(0, 64)
@@ -33,7 +34,7 @@ object "Account" {
         }
       }
       if iszero(eq(node, sload(0))) { revert(0, 0) }
-      verbatim_3i_0o(hex"aa", 0, 0, 3)
+      verbatim_3i_0o(hex"aa", 0, 0, verbatim_2i_1o(hex"b3", fidx, 0x06))
       stop()
     }
   }

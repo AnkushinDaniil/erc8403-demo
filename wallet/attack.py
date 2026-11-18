@@ -34,6 +34,29 @@ def reuse_signature():
     b[3][1][2] = THIEF
     b[3][1][4] = be(50 * 10**18)
     report(send_raw(b"\x06" + rlp.encode(b)))
+def signed_message():
+    recs = chain_records()
+    _, proofs = tree([leaf(a, h) for a, h in recs])
+    ph = (DEVICES["phone"][1], addr_of("phone"))
+    digest = k256(b"an unrelated off-chain message the phone key signed once")
+    print(f"the {B}phone{X} key once signed an unrelated message {sh(digest)}")
+    print(f"thief puts that message and signature into a transaction from alice's account")
+    raw, _ = sign_tx(ALICE, nonce_of(ALICE), [verify_frame(ph[0], ph[1], proofs[leaf(*ph)]), DRAIN], bytes.fromhex(DEVICES["phone"][0]), fees(), digest)
+    report(send_raw(raw))
+def takeover():
+    recs = chain_records()
+    _, proofs = tree([leaf(a, h) for a, h in recs])
+    lap, vault = (DEVICES["laptop"][1], addr_of("laptop")), (DEVICES["vault"][1], addr_of("vault"))
+    new_root = leaf(*lap)
+    print(f"thief holds the {B}laptop{X} key and sets a tree with the laptop key only")
+    data = new_root + w32(1) + w32(lap[0]) + w32(lap[1])
+    raw, _ = sign_tx(ALICE, nonce_of(ALICE), [verify_frame(lap[0], lap[1], proofs[leaf(*lap)]), [2, 0, ALICE, [200000, 0], 0, data]], bytes.fromhex(DEVICES["laptop"][0]), fees())
+    r = send_raw(raw)
+    print(f"{Y}!! accepted{X} · block {r['block']} · root is now {sh(chain_root())}" if r["ok"] else f"{R}✗ REFUSED BY THE NODE{X}  {D}{r.get('error', r['stage'])}{X}")
+    print(f"the owner tries to pay bob with the {B}vault{X} key")
+    raw, _ = sign_tx(ALICE, nonce_of(ALICE), [verify_frame(vault[0], vault[1], proofs[leaf(*vault)]), [2, 0, BOB, [60000, 0], 10**18, b""]], bytes.fromhex(DEVICES["vault"][0]), fees())
+    r = send_raw(raw)
+    print(f"{G}✓ accepted{X} · block {r['block']}" if r["ok"] else f"{R}✗ REFUSED BY THE NODE{X}  {D}{r.get('error', r['stage'])}{X}")
 def thief_two():
     import mc
     mc.on("two")
@@ -66,4 +89,4 @@ def stale_proof():
     else:
         print(f"{R}✗ REFUSED BY THE NODE{X}"); print(f"  {D}" + r.get('error', r['stage']).replace("frame transaction ", "").replace(", ", f"{X}\n  {D}") + X)
     print(f"thief balance: {B}{balance(THIEF) / 1e18:.2f} ETH{X}")
-{"forged-header": forged_header, "stale-proof": stale_proof, "stolen-key": stolen_key, "foreign-proof": foreign_proof, "reuse-signature": reuse_signature}[sys.argv[1]]()
+{"forged-header": forged_header, "stale-proof": stale_proof, "stolen-key": stolen_key, "foreign-proof": foreign_proof, "reuse-signature": reuse_signature, "signed-message": signed_message, "takeover": takeover}[sys.argv[1]]()
